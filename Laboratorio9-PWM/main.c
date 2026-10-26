@@ -31,7 +31,7 @@ void gpio_init(void){
     RCC -> AHB2ENR |= RCC_AHB2ENR_GPIOBEN; // Habilitar reloj GPIOB
 
     GPIOB -> MODER &= ~(3<<0); // Limpiar bits de modo para PB0
-    GPIOB -> MODER |= (2<<0); // Configurar PB0 como salida alternativa (AF)
+    GPIOB -> MODER |= (2<<0); // Configurar PB0 como funcion alternativa (AF)
     GPIOB -> AFR[0] &= ~(0xF<<0); // Limpiar bits de AF para PB0
     GPIOB -> AFR[0] |= (2<<0); // Configurar PB0 como AF2 (TIM3_CH3)
 
@@ -57,8 +57,8 @@ void gpio_init(void){
 void tim3_init(void){
     RCC -> APB1ENR1 |= RCC_APB1ENR1_TIM3EN; // Habilitar reloj TIM3
     TIM3 -> PSC = 3; // Prescaler 16Mhz / 4 = 4Mhz
-    TIM3 -> ARR = 4095; // 4 MHz / 4096 = 976.5625 Hz esta es el periodo de la señal PWM
-    TIM3 -> CCR3 = 2048; // 50% duty cycle
+    TIM3 -> ARR = 4095; // 4 MHz / 4096 = 976.5625 Hz esta es la frecuencia de la señal PWM y su periodo es de 1.024 ms
+    TIM3 -> CCR3 = 2048; // 50% duty cycle 
 
     TIM3 -> CCMR2 &= ~((3<<0)|(7<<4)|(1<<16)); // Limpiar CC3S (bits 1:0) y OC3M (bits 6:4 y bit 16) para CH3
     TIM3 -> CCMR2 |= (6<<4); // Configurar CH3 en modo PWM1 OC3M=0110 PWM modo 1
@@ -68,9 +68,9 @@ void tim3_init(void){
     TIM3 -> CCER |= (1<<8); // Habilitar salida para CH3
 
     TIM3 -> CR1 &= ~((1<<4)|(3<<5)); // DIR=0, contador ascendente, CMS = 00, edge-aligned mode
-    TIM3 -> CR1 |= (1<<7); // ARPE: precarga habilitada de ARR
+    //TIM3 -> CR1 |= (1<<7); // ARPE: precarga habilitada de ARR
 
-    TIM3 -> EGR |= (1<<0); // UG: cargar el valor de ARR y PSC y CCR3
+    TIM3 -> EGR |= (1<<0); // UG: cargar el valor de ARR y PSC y CCR3 para que el timer arranque con los valores correctos desde el primer ciclo
     TIM3 -> CR1 |= (1<<0); // CEN: arrancar el contador
 
 }
@@ -84,7 +84,7 @@ void adc_init(void){
     ADC1 -> CR |= (1<<28); // ADVREGEN=1 encender regulador de voltaje del ADC
     for(volatile int i=0; i<10000; i++); // Esperar >= 20us para que el regulador se estabilice
 
-    ADC1 -> CR &= ~(1<<30); // ADCALDIF=0, calibrar en modo single-ended
+    ADC1 -> CR &= ~(1<<30); // ADCALDIF=0, calibrar en modo single-ended mide el voltaje de un pin respecto a GND
     ADC1 -> CR |= (1U<<31); // ADCAL=1, iniciar calibración
     while (ADC1 -> CR & (1U<<31)); // Esperar a que la calibración termine (ADCAL vuelve a 0)
 
